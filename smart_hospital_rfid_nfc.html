@@ -1,0 +1,463 @@
+
+<h2 class="sr-only">Akıllı Hastane Hasta Takip ve İlaç Doğrulama Sistemi - NFC ve RFID simülasyonu</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#185FA5;--blue-light:#E6F1FB;--blue-mid:#378ADD;--green:#0F6E56;--green-light:#E1F5EE;--green-mid:#1D9E75;--red:#A32D2D;--red-light:#FCEBEB;--red-mid:#E24B4A;--amber:#854F0B;--amber-light:#FAEEDA;--amber-mid:#BA7517;--purple:#534AB7;--purple-light:#EEEDFE}
+.app{padding:1rem 0;font-family:var(--font-sans)}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.logo-text{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.logo-sub{font-size:11px;color:var(--color-text-secondary)}
+.live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green-mid)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.nav{display:flex;gap:4px;margin-bottom:1.25rem;flex-wrap:wrap}
+.nav-btn{padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);transition:all 0.15s}
+.nav-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center}
+.stat-n{font-size:22px;font-weight:500}
+.stat-l{font-size:11px;color:var(--color-text-secondary);margin-top:3px}
+.section{display:none}.section.on{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-hd{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.patient-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;transition:background 0.1s}
+.patient-row:last-child{border-bottom:none}
+.patient-row:hover{background:var(--color-background-secondary);margin:0 -1.25rem;padding:10px 1.25rem}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.psub{font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono)}
+.proom{font-size:12px;color:var(--color-text-secondary);text-align:right}
+.nfc-zone{border:2px dashed var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:1.5rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px}
+.nfc-zone:hover{border-color:var(--blue-mid)}
+.nfc-zone.scanning{border-color:var(--amber-mid);animation:pulse 0.8s infinite}
+.nfc-zone.ok{border-color:var(--green-mid);background:var(--green-light)}
+.nfc-zone.fail{border-color:var(--red-mid);background:var(--red-light)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.nfc-icon{font-size:36px;margin-bottom:8px}
+.nfc-icon.blue{color:var(--blue-mid)}
+.nfc-icon.amber{color:var(--amber-mid)}
+.nfc-icon.green{color:var(--green-mid)}
+.nfc-icon.red{color:var(--red-mid)}
+.med-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.med-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;cursor:pointer;transition:all 0.15s}
+.med-card:hover{border-color:var(--blue-mid);background:var(--blue-light)}
+.med-card.selected{border:2px solid var(--blue-mid);background:var(--blue-light)}
+.med-card.verified{border:2px solid var(--green-mid);background:var(--green-light)}
+.med-card.wrong{border:2px solid var(--red-mid);background:var(--red-light)}
+.med-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.med-uid{font-size:10px;font-family:var(--font-mono);color:var(--color-text-secondary)}
+.med-dose{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--border-radius-md);margin-bottom:8px}
+.alert-item.warn{background:var(--amber-light);border-left:3px solid var(--amber-mid)}
+.alert-item.danger{background:var(--red-light);border-left:3px solid var(--red-mid)}
+.alert-item.info{background:var(--blue-light);border-left:3px solid var(--blue-mid)}
+.log-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;font-family:var(--font-mono);font-size:11px;max-height:180px;overflow-y:auto}
+.log-row{display:flex;gap:8px;padding:3px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.log-row:last-child{border:none}
+.lt{color:var(--color-text-tertiary);flex-shrink:0}
+.lm{color:var(--color-text-primary)}.lm.ok{color:var(--green)}.lm.err{color:var(--red)}.lm.warn{color:var(--amber)}
+.progress{height:6px;border-radius:3px;background:var(--color-border-tertiary);overflow:hidden;margin-top:6px}
+.progress-bar{height:100%;border-radius:3px;transition:width 0.3s}
+.timeline{position:relative;padding-left:20px}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-item::before{content:'';position:absolute;left:-14px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--blue-mid)}
+.tl-item::after{content:'';position:absolute;left:-11px;top:14px;width:2px;height:calc(100% + 6px);background:var(--color-border-tertiary)}
+.tl-item:last-child::after{display:none}
+.tl-time{font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-mono)}
+.tl-text{font-size:13px;color:var(--color-text-primary)}
+.tl-sub{font-size:11px;color:var(--color-text-secondary)}
+.select-box{padding:7px 10px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;width:100%;margin-bottom:10px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#0C447C}
+.btn-green{background:var(--green-mid);color:#fff}.btn-green:hover{background:var(--green)}
+.btn-outline{background:transparent;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary)}.btn-outline:hover{background:var(--color-background-secondary)}
+.result-box{padding:12px 14px;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;margin-top:10px;display:none;align-items:center;gap:8px}
+.result-box.show{display:flex}
+.result-box.ok{background:var(--green-light);color:var(--green);border:0.5px solid var(--green-mid)}
+.result-box.fail{background:var(--red-light);color:var(--red);border:0.5px solid var(--red-mid)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.grid4{grid-template-columns:repeat(2,1fr)}.med-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+</style>
+
+<div class="app">
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i></div>
+    <div>
+      <div class="logo-text">MedTrack — Akıllı Hastane Sistemi</div>
+      <div class="logo-sub">NFC + RFID Hasta & İlaç Takip Simülatörü</div>
+    </div>
+  </div>
+  <div class="live"><div class="dot"></div>Sistem aktif</div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="nav('patients')"><i class="ti ti-users" aria-hidden="true"></i> Hastalar</button>
+  <button class="nav-btn" onclick="nav('meds')"><i class="ti ti-pill" aria-hidden="true"></i> İlaç Doğrulama</button>
+  <button class="nav-btn" onclick="nav('track')"><i class="ti ti-map-pin" aria-hidden="true"></i> Konum Takip</button>
+  <button class="nav-btn" onclick="nav('alerts')"><i class="ti ti-bell" aria-hidden="true"></i> Alarmlar <span id="alert-cnt" style="background:#E24B4A;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px">3</span></button>
+  <button class="nav-btn" onclick="nav('log')"><i class="ti ti-list" aria-hidden="true"></i> Kayıtlar</button>
+</div>
+
+<div class="grid4">
+  <div class="stat"><div class="stat-n" style="color:var(--blue-mid)">12</div><div class="stat-l">Aktif Hasta</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--green-mid)">47</div><div class="stat-l">Bugün İlaç ✓</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--red-mid)">3</div><div class="stat-l">Kritik Alarm</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--amber-mid)">2</div><div class="stat-l">İzin Dışı</div></div>
+</div>
+
+<!-- HASTALAR -->
+<div class="section on" id="sec-patients">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd"><span><i class="ti ti-users" aria-hidden="true"></i> Hasta Listesi</span> <span class="badge badge-blue">NFC Kimlik</span></div>
+      <div id="patient-list"></div>
+    </div>
+    <div class="card" id="patient-detail-card">
+      <div class="card-hd"><i class="ti ti-id" aria-hidden="true"></i> Hasta Detayı</div>
+      <div id="patient-detail"><div style="color:var(--color-text-secondary);font-size:13px;padding:2rem 0;text-align:center"><i class="ti ti-arrow-left" aria-hidden="true"></i> Soldaki listeden hasta seçin</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><i class="ti ti-wifi" aria-hidden="true"></i> NFC Hasta Kimlik Okuyucu — Kapı / Koğuş</div>
+    <div class="two-col">
+      <div>
+        <select class="select-box" id="nfc-patient-select"></select>
+        <div class="nfc-zone" id="nfc-zone" onclick="nfcScan()">
+          <div class="nfc-icon blue" id="nfc-ico"><i class="ti ti-wifi" aria-hidden="true"></i></div>
+          <div style="font-size:13px;color:var(--color-text-secondary)" id="nfc-txt">Hastanın NFC bileziğini okut</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:4px" id="nfc-sub">Tıkla → simüle et</div>
+        </div>
+        <div class="result-box" id="nfc-result"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">Son NFC Okumalar</div>
+        <div class="log-box" id="nfc-log-box"><div style="color:var(--color-text-tertiary);font-size:11px">Henüz okuma yok</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- İLAÇ DOĞRULAMA -->
+<div class="section" id="sec-meds">
+  <div class="card">
+    <div class="card-hd"><span><i class="ti ti-pill" aria-hidden="true"></i> İlaç Doğrulama — RFID Etiket Taraması</span><span class="badge badge-purple">5 Kurallı Doğrulama</span></div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Hemşire, hastaya verilecek ilacı RFID okuyucudan geçirir. Sistem: hasta-ilaç eşleşmesi, doz, alerji, son kullanma ve tekrar kontrolü yapar.</p>
+    <div class="two-col">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">1. Hasta seç (NFC bilezik)</div>
+        <select class="select-box" id="med-patient-sel"></select>
+        <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">2. İlacı RFID ile tara</div>
+        <div class="med-grid" id="med-list"></div>
+        <button class="btn btn-blue" style="margin-top:12px;width:100%" onclick="verifyMed()"><i class="ti ti-scan" aria-hidden="true"></i> RFID Doğrulamayı Çalıştır</button>
+        <div class="result-box" id="med-result"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">Doğrulama Kontrolleri</div>
+        <div id="check-list" style="display:flex;flex-direction:column;gap:8px">
+          <div class="check-row" id="chk-match" style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-circle" style="color:var(--color-text-tertiary)" aria-hidden="true"></i> Hasta-ilaç eşleşmesi</div>
+          <div class="check-row" id="chk-dose" style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-circle" style="color:var(--color-text-tertiary)" aria-hidden="true"></i> Doz uygunluğu</div>
+          <div class="check-row" id="chk-allergy" style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-circle" style="color:var(--color-text-tertiary)" aria-hidden="true"></i> Alerji kontrolü</div>
+          <div class="check-row" id="chk-expire" style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-circle" style="color:var(--color-text-tertiary)" aria-hidden="true"></i> Son kullanma tarihi</div>
+          <div class="check-row" id="chk-double" style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-circle" style="color:var(--color-text-tertiary)" aria-hidden="true"></i> Çift doz kontrolü</div>
+        </div>
+        <div style="margin-top:16px;font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">Bugünkü İlaç Programı</div>
+        <div id="schedule-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KONUM TAKİP -->
+<div class="section" id="sec-track">
+  <div class="card">
+    <div class="card-hd"><span><i class="ti ti-map-pin" aria-hidden="true"></i> Hasta & Ekipman Konum Takibi</span><span class="badge badge-blue">RFID Anten Ağı</span></div>
+    <div id="floor-map" style="position:relative;background:var(--color-background-secondary);border-radius:var(--border-radius-md);height:260px;overflow:hidden;margin-bottom:12px"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="location-cards"></div>
+  </div>
+</div>
+
+<!-- ALARMLAR -->
+<div class="section" id="sec-alerts">
+  <div class="card">
+    <div class="card-hd"><i class="ti ti-bell" aria-hidden="true"></i> Aktif Alarmlar & Uyarılar</div>
+    <div id="alerts-list"></div>
+  </div>
+</div>
+
+<!-- KAYITLAR -->
+<div class="section" id="sec-log">
+  <div class="card">
+    <div class="card-hd"><span><i class="ti ti-list" aria-hidden="true"></i> Sistem Erişim Kayıtları</span> <button class="btn btn-outline" onclick="clearLog()" style="font-size:11px;padding:4px 10px">Temizle</button></div>
+    <div class="log-box" id="main-log" style="max-height:300px"></div>
+  </div>
+</div>
+</div>
+
+<script>
+const T=()=>{const d=new Date();return[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':')};
+
+const PATIENTS=[
+  {id:1,name:'Əliyev Kamran',age:54,room:'A-201',uid:'NF:A3:21:9C',diagnosis:'Kardiyoloji',allergies:['Penisilin'],meds:[1,3],status:'Stabil',color:'#185FA5',bg:'#E6F1FB'},
+  {id:2,name:'Həsənova Aytən',age:38,room:'B-104',uid:'NF:B7:45:2D',diagnosis:'Nöroloji',allergies:[],meds:[2,4],status:'İzleme',color:'#1D9E75',bg:'#E1F5EE'},
+  {id:3,name:'Babayev Tural',age:71,room:'C-307',uid:'NF:C1:8F:77',diagnosis:'Ortopedi',allergies:['İbuprofen'],meds:[3,5],status:'Kritik',color:'#D85A30',bg:'#FAECE7'},
+  {id:4,name:'Qasımova Nigar',age:29,room:'A-105',uid:'NF:D9:3A:61',diagnosis:'Dahiliye',allergies:[],meds:[1,2],status:'Stabil',color:'#534AB7',bg:'#EEEDFE'},
+];
+
+const MEDS=[
+  {id:1,name:'Metoprolol 50mg',uid:'RF:M1:4A:2B',dose:'1x1',expires:'2026-08',type:'Kalp'},
+  {id:2,name:'Levetirasetam 500mg',uid:'RF:M2:9C:F3',dose:'2x1',expires:'2025-09',type:'Nöroloji'},
+  {id:3,name:'Paracetamol 500mg',uid:'RF:M3:2D:87',dose:'3x1',expires:'2027-03',type:'Ağrı'},
+  {id:4,name:'Gabapentin 300mg',uid:'RF:M4:7E:15',dose:'1x2',expires:'2026-11',type:'Sinir'},
+  {id:5,name:'Tramadol 100mg',uid:'RF:M5:B2:44',dose:'1x1',expires:'2026-06',type:'Ağrı'},
+  {id:6,name:'Amoksisilin 500mg',uid:'RF:M6:C8:39',dose:'3x1',expires:'2026-09',type:'Antibiyotik'},
+];
+
+const ALERTS=[
+  {type:'danger',icon:'ti-alert-triangle',msg:'Babayev Tural — İbuprofen içeren ilaç atandı! Alerji uyarısı.',time:'09:14'},
+  {type:'danger',icon:'ti-clock',msg:'Həsənova Aytən — 08:00 ilaç dozu verilmedi (2 saat gecikme).',time:'10:02'},
+  {type:'warn',icon:'ti-map-pin',msg:'Hasta Babayev Tural izin verilen bölge dışına çıktı (Acil Çıkış yakını).',time:'10:31'},
+  {type:'info',icon:'ti-pill',msg:'Metoprolol stok uyarısı — 8 kutu kaldı, yenileme gerekli.',time:'10:45'},
+];
+
+let selMed=null, nfcLogs=[], mainLogs=[], givenToday={};
+
+function nav(id){
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{const ids=['patients','meds','track','alerts','log'];b.classList.toggle('active',ids[i]===id)});
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id==='sec-'+id));
+}
+
+function addLog(msg,type='info'){
+  mainLogs.unshift({t:T(),msg,type});
+  if(mainLogs.length>60)mainLogs.pop();
+  renderMainLog();
+}
+
+function renderMainLog(){
+  const el=document.getElementById('main-log');
+  el.innerHTML=mainLogs.length?mainLogs.map(l=>`<div class="log-row"><span class="lt">${l.t}</span><span class="lm ${l.type}">${l.msg}</span></div>`).join(''):'<div style="color:var(--color-text-tertiary);font-size:11px">Kayıt yok</div>';
+}
+
+function clearLog(){mainLogs=[];renderMainLog()}
+
+// Hasta listesi
+function renderPatients(){
+  const el=document.getElementById('patient-list');
+  el.innerHTML=PATIENTS.map(p=>`
+    <div class="patient-row" onclick="showPatient(${p.id})">
+      <div class="avatar" style="background:${p.bg};color:${p.color}">${p.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="psub">${p.uid} · ${p.diagnosis}</div>
+      </div>
+      <div class="proom">
+        <div style="font-size:13px;font-weight:500">${p.room}</div>
+        <span class="badge ${p.status==='Kritik'?'badge-red':p.status==='İzleme'?'badge-amber':'badge-green'}">${p.status}</span>
+      </div>
+    </div>`).join('');
+
+  const sel=document.getElementById('nfc-patient-select');
+  sel.innerHTML=PATIENTS.map(p=>`<option value="${p.id}">${p.name} — ${p.room}</option>`).join('');
+  const sel2=document.getElementById('med-patient-sel');
+  sel2.innerHTML=PATIENTS.map(p=>`<option value="${p.id}">${p.name} (${p.diagnosis})</option>`).join('');
+}
+
+function showPatient(id){
+  const p=PATIENTS.find(x=>x.id===id);
+  const meds=p.meds.map(mid=>MEDS.find(m=>m.id===mid));
+  const history=[
+    {time:'08:00',text:'İlaç verildi',sub:meds[0]?.name||'-'},
+    {time:'07:30',text:'NFC giriş — A Blok',sub:'Hemşire: Anar Rüstəmov'},
+    {time:'06:45',text:'Vital ölçüm',sub:'KB:120/80 · NB:72 · Temp:36.7'},
+    {time:'Dün 20:00',text:'İlaç verildi',sub:meds[1]?.name||'-'},
+  ];
+  document.getElementById('patient-detail').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="background:${p.bg};color:${p.color};width:48px;height:48px;font-size:16px">${p.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div>
+        <div style="font-size:15px;font-weight:500">${p.name}</div>
+        <div style="font-size:12px;color:var(--color-text-secondary)">${p.age} yaş · ${p.diagnosis} · ${p.room}</div>
+        <code style="font-size:10px;color:var(--color-text-tertiary)">${p.uid}</code>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      ${p.allergies.length?p.allergies.map(a=>`<span class="badge badge-red"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${a}</span>`).join(''):'<span class="badge badge-green">Alerji yok</span>'}
+      <span class="badge ${p.status==='Kritik'?'badge-red':p.status==='İzleme'?'badge-amber':'badge-green'}">${p.status}</span>
+    </div>
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">Atanmış İlaçlar</div>
+    ${meds.map(m=>`<div style="font-size:12px;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)">${m.name} — ${m.dose}</div>`).join('')}
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:12px 0 8px">Geçmiş (RFID/NFC)</div>
+    <div class="timeline">${history.map(h=>`<div class="tl-item"><div class="tl-time">${h.time}</div><div class="tl-text">${h.text}</div><div class="tl-sub">${h.sub}</div></div>`).join('')}</div>`;
+  addLog(`Hasta dosyası açıldı: ${p.name} [${p.uid}]`,'info');
+}
+
+// NFC tarama
+function nfcScan(){
+  const pid=parseInt(document.getElementById('nfc-patient-select').value);
+  const p=PATIENTS.find(x=>x.id===pid);
+  const zone=document.getElementById('nfc-zone');
+  const ico=document.getElementById('nfc-ico');
+  const txt=document.getElementById('nfc-txt');
+  const sub=document.getElementById('nfc-sub');
+  const res=document.getElementById('nfc-result');
+  zone.className='nfc-zone scanning';
+  ico.className='nfc-icon amber';ico.innerHTML='<i class="ti ti-refresh" aria-hidden="true"></i>';
+  txt.textContent='NFC bilezik okunuyor...';sub.textContent=p.uid;res.className='result-box';
+  setTimeout(()=>{
+    zone.className='nfc-zone ok';
+    ico.className='nfc-icon green';ico.innerHTML='<i class="ti ti-circle-check" aria-hidden="true"></i>';
+    txt.textContent='Kimlik Doğrulandı';sub.textContent=`${p.name} · ${p.room}`;
+    res.className='result-box show ok';
+    res.innerHTML=`<i class="ti ti-check" aria-hidden="true"></i> ${p.name} — ${p.room} giriş izni verildi (${p.diagnosis})`;
+    const log=`${T()} · ${p.name} [${p.uid}] giriş — ${p.room}`;
+    nfcLogs.unshift(log);
+    document.getElementById('nfc-log-box').innerHTML=nfcLogs.slice(0,8).map(l=>`<div class="log-row"><span class="lm ok">${l}</span></div>`).join('');
+    addLog(`NFC kimlik onaylandı: ${p.name} — ${p.room}`,'ok');
+    setTimeout(()=>{zone.className='nfc-zone';ico.className='nfc-icon blue';ico.innerHTML='<i class="ti ti-wifi" aria-hidden="true"></i>';txt.textContent='Hastanın NFC bileziğini okut';sub.textContent='Tıkla → simüle et';},2500);
+  },1100);
+}
+
+// İlaçlar
+function renderMeds(){
+  document.getElementById('med-list').innerHTML=MEDS.map(m=>`
+    <div class="med-card ${selMed===m.id?'selected':''}" onclick="selectMed(${m.id})">
+      <div class="med-name">${m.name}</div>
+      <div class="med-uid">${m.uid}</div>
+      <div class="med-dose">${m.dose} · ${m.type}</div>
+    </div>`).join('');
+
+  const pid=parseInt(document.getElementById('med-patient-sel')?.value)||1;
+  const p=PATIENTS.find(x=>x.id===pid);
+  document.getElementById('schedule-list').innerHTML=p?p.meds.map(mid=>{
+    const m=MEDS.find(x=>x.id===mid);
+    const done=givenToday[`${pid}-${mid}`];
+    return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px">
+      <i class="ti ${done?'ti-circle-check':'ti-circle'}" style="color:${done?'var(--green-mid)':'var(--color-text-tertiary)'}" aria-hidden="true"></i>
+      <span>${m.name}</span><span style="color:var(--color-text-secondary);margin-left:auto">${m.dose}</span>
+    </div>`;
+  }).join(''):'';
+}
+
+function selectMed(id){selMed=id;renderMeds();resetChecks()}
+
+function resetChecks(){
+  ['match','dose','allergy','expire','double'].forEach(k=>{
+    const el=document.getElementById('chk-'+k);
+    el.querySelector('i').className='ti ti-circle';
+    el.querySelector('i').style.color='var(--color-text-tertiary)';
+  });
+  document.getElementById('med-result').className='result-box';
+}
+
+function setCheck(id,ok){
+  const el=document.getElementById('chk-'+id);
+  el.querySelector('i').className=ok?'ti ti-circle-check':'ti ti-x';
+  el.querySelector('i').style.color=ok?'var(--green-mid)':'var(--red-mid)';
+}
+
+function verifyMed(){
+  if(!selMed){alert('Önce bir ilaç seçin');return}
+  const pid=parseInt(document.getElementById('med-patient-sel').value);
+  const p=PATIENTS.find(x=>x.id===pid);
+  const m=MEDS.find(x=>x.id===selMed);
+  const res=document.getElementById('med-result');
+  resetChecks();
+  const checks={};
+  setTimeout(()=>{
+    checks.match=p.meds.includes(m.id);setCheck('match',checks.match);
+  },300);
+  setTimeout(()=>{checks.dose=true;setCheck('dose',true);},600);
+  setTimeout(()=>{
+    const allergyConflict=(m.name.includes('Amoks')&&p.allergies.includes('Penisilin'))||(m.name.includes('İbupro')&&p.allergies.includes('İbuprofen'))||(m.name.includes('Tramad')&&p.allergies.includes('İbuprofen'));
+    checks.allergy=!allergyConflict;setCheck('allergy',checks.allergy);
+  },900);
+  setTimeout(()=>{
+    const exp=new Date(m.expires+'-01');checks.expire=exp>new Date();setCheck('expire',checks.expire);
+  },1200);
+  setTimeout(()=>{
+    const key=`${pid}-${selMed}`;checks.double=!givenToday[key];setCheck('double',checks.double);
+  },1500);
+  setTimeout(()=>{
+    const allOk=Object.values(checks).every(Boolean);
+    const key=`${pid}-${selMed}`;
+    if(allOk){
+      givenToday[key]=true;
+      res.className='result-box show ok';
+      res.innerHTML=`<i class="ti ti-shield-check" aria-hidden="true"></i> Onaylandı — ${m.name} hastaya verilebilir`;
+      addLog(`İlaç onaylandı: ${m.name} → ${p.name} [${m.uid}]`,'ok');
+    } else {
+      res.className='result-box show fail';
+      const why=!checks.match?'İlaç bu hastaya atanmamış':!checks.allergy?'Alerji çakışması':!checks.expire?'Son kullanma tarihi geçmiş':!checks.double?'Bu ilaç bugün zaten verildi':'Kontrol hatası';
+      res.innerHTML=`<i class="ti ti-ban" aria-hidden="true"></i> REDDEDILDI — ${why}`;
+      addLog(`İlaç REDDEDİLDİ: ${m.name} → ${p.name} — ${why}`,'err');
+    }
+    renderMeds();
+  },1800);
+}
+
+// Konum haritası
+function renderTrack(){
+  const map=document.getElementById('floor-map');
+  const rooms=[
+    {label:'A Koğuşu',x:5,y:10,w:30,h:35,color:'#E6F1FB',stroke:'#378ADD'},
+    {label:'B Koğuşu',x:38,y:10,w:28,h:35,color:'#E1F5EE',stroke:'#1D9E75'},
+    {label:'C Koğuşu',x:69,y:10,w:28,h:35,color:'#FAEEDA',stroke:'#BA7517'},
+    {label:'Ameliyat',x:5,y:55,w:28,h:30,color:'#FCEBEB',stroke:'#E24B4A'},
+    {label:'Eczane',x:36,y:55,w:26,h:30,color:'#EEEDFE',stroke:'#534AB7'},
+    {label:'Acil',x:65,y:55,w:32,h:30,color:'#FAECE7',stroke:'#D85A30'},
+  ];
+  const dots=[
+    {name:'Kamran Ə.',x:18,y:25,color:'#185FA5'},
+    {name:'Aytən H.',x:52,y:22,color:'#1D9E75'},
+    {name:'Tural B.',x:80,y:62,color:'#D85A30'},
+    {name:'Nigar Q.',x:15,y:63,color:'#534AB7'},
+    {name:'Narkoz cih.',x:40,y:65,color:'#854F0B',shape:'square'},
+  ];
+  map.innerHTML=`<svg width="100%" height="100%" viewBox="0 0 100 90" preserveAspectRatio="xMidYMid meet">
+    ${rooms.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="2" fill="${r.color}" stroke="${r.stroke}" stroke-width="0.5"/>
+    <text x="${r.x+r.w/2}" y="${r.y+6}" text-anchor="middle" font-size="3.5" fill="${r.stroke}">${r.label}</text>`).join('')}
+    ${dots.map(d=>d.shape==='square'?
+      `<rect x="${d.x-2.5}" y="${d.y-2.5}" width="5" height="5" fill="${d.color}" opacity="0.9"/>
+       <text x="${d.x}" y="${d.y+7}" text-anchor="middle" font-size="2.8" fill="${d.color}">${d.name}</text>`:
+      `<circle cx="${d.x}" cy="${d.y}" r="3" fill="${d.color}" opacity="0.9" stroke="#fff" stroke-width="0.5"/>
+       <text x="${d.x}" y="${d.y+6}" text-anchor="middle" font-size="2.8" fill="${d.color}">${d.name}</text>`).join('')}
+    <text x="50" y="88" text-anchor="middle" font-size="2.5" fill="#888">● Hasta  ■ Ekipman — RFID Anten Ağı</text>
+  </svg>`;
+
+  document.getElementById('location-cards').innerHTML=PATIENTS.map(p=>`
+    <div class="stat">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">${p.name.split(' ')[0]}</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">${p.room}</div>
+      <div style="font-size:10px;color:${p.status==='Kritik'?'var(--red-mid)':p.status==='İzleme'?'var(--amber-mid)':'var(--green-mid)'};margin-top:3px">${p.status}</div>
+    </div>`).join('');
+}
+
+// Alarmlar
+function renderAlerts(){
+  document.getElementById('alerts-list').innerHTML=ALERTS.map(a=>`
+    <div class="alert-item ${a.type}">
+      <i class="ti ${a.icon}" style="font-size:18px;flex-shrink:0" aria-hidden="true"></i>
+      <div>
+        <div style="font-size:13px;color:var(--color-text-primary)">${a.msg}</div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">${a.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+// Başlat
+renderPatients();renderMeds();renderAlerts();renderTrack();
+addLog('MedTrack sistemi başlatıldı — NFC + RFID modülleri aktif','ok');
+addLog('12 aktif hasta takibde, 3 kritik alarm mevcut','warn');
+
+document.getElementById('med-patient-sel').addEventListener('change',()=>{selMed=null;resetChecks();renderMeds()});
+</script>
